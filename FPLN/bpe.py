@@ -3,12 +3,18 @@ from Tokenize import space_tokenize, ascii_letters, digits
 
 class Bpe() :
     def __init__(self):
-        self.voc = set(["[UNK]"])
+        self.voc = set()
+        self._rules = dict()
+
 
     @property
     def vocab(self):
         return self.voc
 
+    @property
+    def rules(self):
+        return self._rules
+    
     def train(self, text: str, max_vocab: int = 300) -> list[str]:
         pretokenized = space_tokenize(text)
         ascii_range = list(ascii_letters + digits + "".join([chr(i) for i in range(193, 255)]))
@@ -16,10 +22,12 @@ class Bpe() :
         for i in pretokenized:
             word = []
             for j, e in enumerate(i):
-                word.append(("##" + e if j > 0 else e) if e in ascii_range else "[UNK]")
+                word.append(e)
             corpus.append(word)
         self.voc.update(chain.from_iterable(corpus))
+
         maxcnt = (True, True)
+
         while len(self.voc) < max_vocab and maxcnt[0]:
             paircnt = dict()
             maxcnt = (0, ("", ""))
@@ -28,7 +36,8 @@ class Bpe() :
                     paircnt[pair] = 1 + paircnt.get(pair, 0)
                     maxcnt = (paircnt[pair], pair) if paircnt[pair] > maxcnt[0] else maxcnt
             first, second = maxcnt[1]
-            fusion = first + second.strip("#") if (first != "[UNK]" and second != "[UNK]") else "[UNK]"
+            fusion = first + second
+            self._rules[fusion] = (first, second)
             self.voc.add(fusion)
             for i, word in enumerate(corpus):
                 j = 0
@@ -42,8 +51,19 @@ class Bpe() :
 
     def tokenize(self, text: str):
         pretokenized = space_tokenize(text)
-        for word in pretokenized:
-            for j in range(len(word) - 1, 0, -1):
-                head = word[:j]
-                if head in self.voc:
-                    word
+        corpus = []
+        for i in pretokenized:
+            word = []
+            for j, e in enumerate(i):
+                word.append(e)
+            corpus.append(word)
+        for rule, pair in zip(self._rules, self._rules.values()):
+            for i, word in enumerate(corpus):
+                j = 0
+                while j < len(word) - 1:
+                    if pair == (word[j], word[j + 1]):
+                        word[j] = rule
+                        word.pop(j + 1)
+                    j += 1
+                corpus[i] = word
+        return list(chain.from_iterable(corpus))
