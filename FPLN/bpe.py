@@ -2,10 +2,11 @@ from itertools import chain
 from Tokenize import space_tokenize, ascii_letters, digits
 
 class Bpe() :
-    def __init__(self):
+
+    def __init__(self, text=None):
         self.voc = set()
         self._rules = dict()
-
+        if text is not None: self.train(text)
 
     @property
     def vocab(self):
@@ -67,3 +68,6 @@ class Bpe() :
                     j += 1
                 corpus[i] = word
         return list(chain.from_iterable(corpus))
+
+    def __str__(self):
+        return "Bpe"

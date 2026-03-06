@@ -2,8 +2,10 @@ from itertools import chain
 from Tokenize import space_tokenize, ascii_letters, digits
 
 class WordPiece() :
-    def __init__(self):
+
+    def __init__(self, text=None):
         self.voc = set(["[UNK]"])
+        if text is not None: self.train(text)
 
     @property
     def vocab(self):
@@ -42,8 +44,28 @@ class WordPiece() :
 
     def tokenize(self, text: str):
         pretokenized = space_tokenize(text)
+        res = []
         for word in pretokenized:
-            for j in range(len(word) - 1, 0, -1):
-                head = word[:j]
-                if head in self.voc:
-                    word
+            start = 0
+            sub_tokens = []
+            while start < len(word):
+                end = len(word)
+                cur_substr = None
+                while start < end:
+                    piece = word[start:end]
+                    if start > 0:
+                        piece = "##" + piece
+                    if piece in self.voc:
+                        cur_substr = piece
+                        break
+                    end -= 1
+                if cur_substr is None or len(cur_substr) < 2:
+                    sub_tokens = ["[UNK]"]
+                    break
+                sub_tokens.append(cur_substr)
+                start = end
+            res.extend(sub_tokens)
+        return res
+
+    def __str__(self):
+        return "WordPiece"

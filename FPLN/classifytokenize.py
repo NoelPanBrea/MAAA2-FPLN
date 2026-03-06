@@ -4,9 +4,11 @@ from sklearn.feature_extraction import DictVectorizer
 from string import digits, punctuation
 
 class ClassifyTokenize():
-    def __init__(self):
+
+    def __init__(self, text=None):
         self.model = None
         self.vectorizer = None
+        if text is not None: self.train(text)
 
     def feature_extraction(self, text: str):
         features = []
@@ -39,7 +41,7 @@ class ClassifyTokenize():
 
         return labels
     
-    def train_classification_tokenize(self, text):
+    def train(self, text):
         X_dict = self.feature_extraction(text)
         y = self.label_extraction(text)
     
@@ -53,7 +55,7 @@ class ClassifyTokenize():
 
         return logistic_model, vectorizer
 
-    def test_classification_tokenize(self, sentence: str):
+    def tokenize(self, sentence: str):
         X_dict = self.feature_extraction(sentence)
         X = self.vectorizer.transform(X_dict)
         predictions = self.model.predict(X)
@@ -83,8 +85,11 @@ class ClassifyTokenize():
                 tokenized_sentences.append(tokens)
 
         return tokenized_sentences
+
+    def __str__(self):
+        return "ClassifyTokenize"
    
-           
+
 
 def main():
     with open("training_sentences.txt", "r", encoding="utf-8") as file:
